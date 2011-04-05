@@ -82,18 +82,15 @@ cd ..
 
 COUCH10=http://127.0.0.1:5984
 curl -X PUT $COUCH10/test-db
-curl -X PUT $COUCH10/test-db/test-doc/attachment.txt \
-  -H "Content-Type: text/plain" \
-  -d "My Hovercraft is full of eels"
 
-# test binary files at 2k, 4k and 8k
-for bin in $CWD/attachments/*.bin; do
+SIZES="1k 2k 3k 4095 4096 4097 8191 8192 8193 1m 10m 20m 25m 50m 75m 100m"
+for size in $SIZES; do
+  # make binary
+  dd if=/dev/urandom of=$size bs=1 count=$size
   # store binary
-  binbasename=`basename $bin`
-  binname=`basename .bin $bin`
-  curl -X PUT $COUCH10/test-db/test-doc-$binname/$binbasename \
+  curl -X PUT $COUCH10/test-db/test-doc-$size/$size \
   -H "Content-Type: application/octet-stream" \
-  --data-binary @$bin
+  --data-binary @$size
 done
 
 # copy test db to 1.1
@@ -106,24 +103,16 @@ curl -X POST $COUCH11/test-db/_compact -H "Content-Type: application/json"
 # validate test db
 TEST_PASSED=true
 
-RESULT=`curl $COUCH11/test-db/test-doc/attachment.txt`
-if [ "$RESULT" != "My Hovercraft is full of eels" ]; then
-  TEST_PASSED=false
-fi
-
-mkdir attachment-results
-cd attachment-results
-for bin in $CWD/attachments/*.bin; do
-  binbasename=`basename $bin`
-  binname=`basename .bin $bin`
-  curl -O $COUCH11/test-db/test-doc-$binname/$binbasename
-  BEFORE=`$OPENSSL sha $bin | awk '{print $2}'`
-  AFTER=`$OPENSSL sha $binbasename | awk '{print $2}'`
+mkdir results
+cd results
+for size in $SIZES; do
+  curl -O $COUCH11/test-db/test-doc-$size/$size
+  BEFORE=`$OPENSSL sha ../$size | awk '{print $2}'`
+  AFTER=`$OPENSSL sha $size | awk '{print $2}'`
   if [ "$BEFORE" !=  "$AFTER" ]; then
     TEST_PASSED=false
   fi
 done
-
 cd ..
 
 # shutdown couches
@@ -137,7 +126,10 @@ cd ..
 cd 1.1
 ./bin/couchdb -d
 
-# resultin
+# cleanup temp files
+rm -f $SIZES
+
+# resultin'
 if [ "$TEST_PASSED" = "false" ]; then
   echo "UPGRADE FAILED"
 else
