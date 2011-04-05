@@ -90,7 +90,7 @@ curl -X PUT $COUCH10/test-db/test-doc/attachment.txt \
 for bin in $CWD/attachments/*.bin; do
   # store binary
   binbasename=`basename $bin`
-  binname=`basename -s .bin $bin`
+  binname=`basename .bin $bin`
   curl -X PUT $COUCH10/test-db/test-doc-$binname/$binbasename \
   -H "Content-Type: application/octet-stream" \
   --data-binary @$bin
@@ -115,7 +115,7 @@ mkdir attachment-results
 cd attachment-results
 for bin in $CWD/attachments/*.bin; do
   binbasename=`basename $bin`
-  binname=`basename -s .bin $bin`
+  binname=`basename .bin $bin`
   curl -O $COUCH11/test-db/test-doc-$binname/$binbasename
   BEFORE=`$OPENSSL sha $bin | awk '{print $2}'`
   AFTER=`$OPENSSL sha $binbasename | awk '{print $2}'`
