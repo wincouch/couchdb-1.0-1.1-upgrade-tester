@@ -29,7 +29,8 @@ set couch11=http://127.0.0.1:5985
 
 :: get ready
 rd /s/q attachments
-mkdir attachments && pushd attachments
+mkdir attachments
+pushd attachments
 set SIZES=1024 2048 3072 4095 4096 4097 8191 8192 8193 1048576 10485760 20971520 26214400 52428800 78643200 104857600
 for %%i in (%sizes%) do rdfc %%i %%i
 openssl sha * > ..\attachments.sha
@@ -48,7 +49,8 @@ curl -X POST %couch11%/test-db/_compact -H "Content-Type: application/json"
 
 :: validate test db
 rd /s/q results
-mkdir results && pushd results
+mkdir results
+pushd results
 for %%i in (%sizes%) do curl -#O %couch11%/test-db/test-doc-%%i/%%i
 openssl sha * > ..\results.sha
 popd
